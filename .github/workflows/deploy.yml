@@ -29,12 +29,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate required secrets
+        run: |
+          # Note: The warnings about context access are expected when secrets are not configured
+          # These secrets must be configured in the GitHub repository settings under:
+          # Settings > Secrets and variables > Actions > Repository secrets
+          # and also in the environment protection rules for each environment
+          if [ -z "${{ secrets.AWS_ROLE_ARN }}" ]; then
+            echo "Error: AWS_ROLE_ARN secret is not set"
+            echo "Please configure this secret in GitHub repository settings"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DEFAULT_AWS_REGION }}" ]; then
+            echo "Error: DEFAULT_AWS_REGION secret is not set"
+            echo "Please configure this secret in GitHub repository settings"
+            exit 1
+          fi
+          if [ -z "${{ secrets.AWS_ACCOUNT_ID }}" ]; then
+            echo "Error: AWS_ACCOUNT_ID secret is not set"
+            echo "Please configure this secret in GitHub repository settings"
+            exit 1
+          fi
+          echo "All required secrets are available"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: github-actions-deploy
           aws-region: ${{ secrets.DEFAULT_AWS_REGION }}
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
